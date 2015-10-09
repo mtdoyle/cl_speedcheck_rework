@@ -10,6 +10,7 @@ from selenium import webdriver
 import MySQLdb as mdb
 import sys
 import random
+import glob
 
 state='MN'
 
@@ -104,7 +105,8 @@ def test3(address, emm_stuff):
         address_orig = address
         address_tmp = address.split(',')
         address = "%s, %s, %s, %s"%(address_tmp[0],address_tmp[1],state,address_tmp[2])
-        profile = webdriver.FirefoxProfile('/home/clspeed/.mozilla/firefox/93h2ly34.clspeed')
+        profile_dir = os.path.expanduser("~")+"/.mozilla/firefox/*clspeed"
+        profile = webdriver.FirefoxProfile(profile_dir)
         user_agent = getUserAgent()
         profile.set_preference("general.useragent.override", user_agent)
         browser = webdriver.Firefox(firefox_profile=profile)
