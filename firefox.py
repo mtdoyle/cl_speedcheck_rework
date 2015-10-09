@@ -111,7 +111,6 @@ def test3(address, emm_stuff):
         profile.set_preference("general.useragent.override", user_agent)
         browser = webdriver.Firefox(firefox_profile=profile)
         browser.set_window_size(800,600)
-        browser.set_window_position(1280,800)
         browser.delete_all_cookies()
         browser.get('http://www.centurylink.com')
         browser.find_element_by_id('landingRes').click()
@@ -199,7 +198,7 @@ def do_stuff(q):
         q.task_done()
 
 q = Queue(maxsize=0)
-num_threads = 10
+num_threads = 5 
 
 for i in range(num_threads):
     worker = Thread(target=do_stuff, args=(q,))
