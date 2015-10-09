@@ -19,36 +19,35 @@ def getUserAgent():
                     "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20121202 Firefox/17.0 Iceweasel/17.0.1",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1 Iceweasel/15.0.1",
                     "Mozilla/5.0 (X11; Linux i686; rv:15.0) Gecko/20100101 Firefox/15.0.1 Iceweasel/15.0.1",
-                    "Mozilla/5.0 (X11; Linux x86_64; rv:15.0) Gecko/20120724 Debian Iceweasel/15.0",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0 Iceweasel/15.0",
-                    "Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20120721 Debian Iceweasel/15.0",
                     "Mozilla/5.0 (X11; Linux i686; rv:15.0) Gecko/20100101 Firefox/15.0 Iceweasel/15.0",
-                    "Mozilla/5.0 (X11; debian; Linux x86_64; rv:15.0) Gecko/20100101 Iceweasel/15.0",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0.1 Iceweasel/14.0.1",
                     "Mozilla/5.0 (X11; Linux i686; rv:14.0) Gecko/20100101 Firefox/14.0.1 Iceweasel/14.0.1",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0 Iceweasel/14.0",
-                    "Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Debian Iceweasel/14.0",
                     "Mozilla/5.0 (X11; Linux i686; rv:14.0) Gecko/20100101 Firefox/14.0 Iceweasel/14.0",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:13.0) Gecko/20100101 Firefox/13.0.1 Iceweasel/13.0.1",
                     "Mozilla/5.0 (X11; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0.1 Iceweasel/13.0.1",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:13.0) Gecko/20100101 Firefox/13.0 Iceweasel/13.0",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:11.0a2) Gecko/20111230 Firefox/11.0a2 Iceweasel/11.0a2",
-                    "Mozilla/5.0 (X11; Gentoo Linux x86_64; rv:11.0a2) Gecko/20111230 Firefox/11.0a2 Iceweasel/11.0a2",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:10.0a2) Gecko/20111118 Firefox/10.0a2 Iceweasel/10.0a2",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:10.0.7) Gecko/20100101 Firefox/10.0.7 Iceweasel/10.0.7",
-                    "Mozilla/5.0 (X11; Linux ppc; rv:10.0.7) Gecko/20100101 Firefox/10.0.7 Iceweasel/10.0.7",
-                    "Mozilla/5.0 (X11; Linux i686; rv:10.0.7) Gecko/20100101 Iceweasel/10.0.7",
                     "Mozilla/5.0 (X11; Linux i686; rv:10.0.7) Gecko/20100101 Firefox/10.0.7 Iceweasel/10.0.7",
                     "Mozilla/5.0 (X11; Linux x86_64; rv:10.0.6) Gecko/20100101 Firefox/10.0.6 Iceweasel/10.0.6",
                     "Mozilla/5.0 (X11; Linux i686; rv:10.0.6) Gecko/20100101 Firefox/10.0.6 Iceweasel/10.0.6",
-                    "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0.6) Gecko/20100101 Firefox/10.0.6 Iceweasel/10.0.6",
-                    "Mozilla/5.0 (X11; Linux armv6l; rv:10.0.6) Gecko/20100101 Firefox/10.0.6 Iceweasel/10.0.6",
-                    "Mozilla/5.0 (X11; Linux armv6l; rv:10.0.5) Gecko/20100101 Firefox/10.0.5 Iceweasel/10.0.5",
-                    "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0 Iceweasel/10.0",
                     "Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0 Iceweasel/10.0",
         ]
     return random.choice(user_agents)
 
+
+def sorryAddressesBackToRabbit(orig):
+        connection = pika.BlockingConnection(pika.ConnectionParameters(
+            host='192.168.1.114'))
+        channel = connection.channel()
+        channel.queue_declare(queue='clspeedSorryAddresses', durable=True)
+        channel.basic_publish(exchange='',
+                    routing_key='clspeedSorryAddresses',
+                    body=orig,)
+        connection.close()
 
 def writeToDBBadAddress(address):
     try:
@@ -140,39 +139,24 @@ def test3(address, emm_stuff):
     if browser.find_elements_by_xpath("//p[@id='highestSpeedWL']/span").__len__()>0:
         element = browser.find_element_by_xpath("//p[@id='highestSpeedWL']/span")
         extracted_speed_match = re.sub(',','',element.text.split(" ")[0])
+        if "866" not in extracted_speed_match:
+            writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
     elif browser.find_elements_by_xpath("//div[@id='clcoffer']/p").__len__()>0:
         element = browser.find_element_by_xpath("//div[@id='clcoffer']/p")
         if 'CenturyLink has fiber-connected Internet with speeds up to 1 Gig in your area' in element.text:
             writeToDBBadAddress(address_orig)
-            browser.quit()
-            return
     elif browser.find_elements_by_id("mboxSorryMain").__len__() > 0:
-            browser.quit()
-            time.sleep(300)
-            test3(address, emm_stuff)
-
-    # extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
-    #extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
-    if "866" not in extracted_speed_match:
-        writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
-        # output = re.sub('\s+',' ', addressFound_formatted+', '+extracted_speed_match)
-        # f = open(filename,'a')
-        # f.write(output+",%s,%s,%s\n"%(emm_stuff[0], emm_stuff[1],emm_stuff[2]))
-        # f.close()
+            sorryAddressesBackToRabbit(address_orig)
     browser.quit()
 
 def run_test(i):
     i = i.strip()
     emm_stuff = i.split(',')[-3:]
-    result = test3(i, emm_stuff)
-    return result
+    test3(i, emm_stuff)
 
 def callback(ch, method, properties, body):
-    result = run_test('%s'%(body,))
-    if result is not None:
-        return
-    else:
-        ch.basic_ack(delivery_tag = method.delivery_tag)
+    run_test('%s'%(body,))
+    ch.basic_ack(delivery_tag = method.delivery_tag)
 
 def do_stuff(q):
     while True:
