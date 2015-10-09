@@ -7,11 +7,9 @@ from datetime import datetime
 import time
 import re
 from selenium import webdriver
-from selenium.webdriver.common import keys
 import MySQLdb as mdb
 import sys
 import random
-from selenium.webdriver.common.proxy import *
 
 state='MN'
 
@@ -101,28 +99,17 @@ def writeToDB(address, speed, emm_stuff):
         if con:
             con.close()
 
-def test3(address, emm_stuff, sorryCycle=1):
-    """
-
-    :type sorryCycle: object
-    """
-    myProxy = "localhost:3128"
-
-    proxy = Proxy({
-        'proxyType': ProxyType.MANUAL,
-        'httpProxy': myProxy,
-        'ftpProxy': myProxy,
-        'sslProxy': myProxy,
-        'noProxy': '' # set this value as desired
-        })
+def test3(address, emm_stuff):
     try:
         address_orig = address
         address_tmp = address.split(',')
         address = "%s, %s, %s, %s"%(address_tmp[0],address_tmp[1],state,address_tmp[2])
-        profile = webdriver.FirefoxProfile('/home/mike/.mozilla/firefox/45dghz1m.clspeed')
+        profile = webdriver.FirefoxProfile('/home/clspeed/.mozilla/firefox/93h2ly34.clspeed')
         user_agent = getUserAgent()
         profile.set_preference("general.useragent.override", user_agent)
-        browser = webdriver.Firefox(proxy=proxy, firefox_profile=profile)
+        browser = webdriver.Firefox(firefox_profile=profile)
+        browser.set_window_size(800,600)
+        browser.set_window_position(1280,800)
         browser.delete_all_cookies()
         browser.get('http://www.centurylink.com')
         browser.find_element_by_id('landingRes').click()
@@ -164,11 +151,7 @@ def test3(address, emm_stuff, sorryCycle=1):
                 if browser.find_elements_by_id("mboxSorryMain").__len__() > 0:
                     browser.quit()
                     time.sleep(300)
-                    sorryCycle += 1
-                    if sorryCycle < 5:
-                        test3(address, emm_stuff, sorryCycle)
-                    else:
-                        return
+                    test3(address, emm_stuff)
 
         # extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
         #extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
@@ -182,17 +165,22 @@ def test3(address, emm_stuff, sorryCycle=1):
     except:
         try:
             browser.quit()
+            return False
         except:
-            pass
+            return False
 
 def run_test(i):
     i = i.strip()
     emm_stuff = i.split(',')[-3:]
-    test3(i, emm_stuff)
+    result = test3(i, emm_stuff)
+    return result
 
 def callback(ch, method, properties, body):
-    run_test('%s'%(body,))
-    ch.basic_ack(delivery_tag = method.delivery_tag)
+    result = run_test('%s'%(body,))
+    if result is not None:
+        return
+    else:
+        ch.basic_ack(delivery_tag = method.delivery_tag)
 
 def do_stuff(q):
     while True:
@@ -208,7 +196,7 @@ def do_stuff(q):
         q.task_done()
 
 q = Queue(maxsize=0)
-num_threads = 10
+num_threads = 5
 
 for i in range(num_threads):
     worker = Thread(target=do_stuff, args=(q,))
