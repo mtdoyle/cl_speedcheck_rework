@@ -105,7 +105,7 @@ def test3(address, emm_stuff):
         address_orig = address
         address_tmp = address.split(',')
         address = "%s, %s, %s, %s"%(address_tmp[0],address_tmp[1],state,address_tmp[2])
-        profile_dir = os.path.expanduser("~")+"/.mozilla/firefox/*clspeed"
+        profile_dir = glob.glob(os.path.expanduser("~")+"/.mozilla/firefox/*clspeed")[0]
         profile = webdriver.FirefoxProfile(profile_dir)
         user_agent = getUserAgent()
         profile.set_preference("general.useragent.override", user_agent)
