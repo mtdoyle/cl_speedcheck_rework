@@ -101,72 +101,65 @@ def writeToDB(address, speed, emm_stuff):
             con.close()
 
 def test3(address, emm_stuff):
+    address_orig = address
+    address_tmp = address.split(',')
+    address = "%s, %s, %s, %s"%(address_tmp[0],address_tmp[1],state,address_tmp[2])
+    profile_dir = glob.glob(os.path.expanduser("~")+"/.mozilla/firefox/*clspeed")[0]
+    profile = webdriver.FirefoxProfile(profile_dir)
+    user_agent = getUserAgent()
+    profile.set_preference("general.useragent.override", user_agent)
+    browser = webdriver.Firefox(firefox_profile=profile)
+    browser.set_window_size(800,600)
+    browser.delete_all_cookies()
+    browser.get('http://www.centurylink.com')
+    browser.find_element_by_id('landingRes').click()
+    browser.find_element_by_id('home-speed-check').click()
+    browser.find_element_by_id('ctam_new-customer-link').click()
+    browser.find_element_by_id('ctam_nc-sfaddress').send_keys(address)
+    browser.find_element_by_css_selector('.ui-autocomplete.ui-menu.ui-widget.ui-widget-content.ui-corner-all')
+    time.sleep(2)
+    addressFound = browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').text
+    print addressFound
+    browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').click()
     try:
-        address_orig = address
-        address_tmp = address.split(',')
-        address = "%s, %s, %s, %s"%(address_tmp[0],address_tmp[1],state,address_tmp[2])
-        profile_dir = glob.glob(os.path.expanduser("~")+"/.mozilla/firefox/*clspeed")[0]
-        profile = webdriver.FirefoxProfile(profile_dir)
-        user_agent = getUserAgent()
-        profile.set_preference("general.useragent.override", user_agent)
-        browser = webdriver.Firefox(firefox_profile=profile)
-        browser.set_window_size(800,600)
-        browser.delete_all_cookies()
-        browser.get('http://www.centurylink.com')
-        browser.find_element_by_id('landingRes').click()
-        browser.find_element_by_id('home-speed-check').click()
-        browser.find_element_by_id('ctam_new-customer-link').click()
-        browser.find_element_by_id('ctam_nc-sfaddress').send_keys(address)
-        browser.find_element_by_css_selector('.ui-autocomplete.ui-menu.ui-widget.ui-widget-content.ui-corner-all')
-        time.sleep(2)
-        addressFound = browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').text
-        print addressFound
-        browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').click()
-        try:
-            browser.find_element_by_id('ctam_nc-go').click()
-        except:
-            pass
-
-        addressFound_formatted = re.sub(r'%s (\d+)'%(state), r'%s,\1'%(state), addressFound)
-        addressFound_formatted = re.sub(',USA', '', addressFound_formatted)
-        count = 0
-        while not 'Choose an Offer' in browser.page_source and count < 10:
-            if 'We need some additional information' in browser.page_source:
-                browser.find_element_by_id('addressid2').click()
-                browser.find_element_by_id('submitSecUnit').click()
-            time.sleep(2)
-            count += 1
-
-        # element = browser.find_element_by_css_selector('.highestSpeed')
-        if browser.find_elements_by_xpath("//p[@id='highestSpeedWL']/span").__len__()>0:
-            element = browser.find_element_by_xpath("//p[@id='highestSpeedWL']/span")
-            extracted_speed_match = re.sub(',','',element.text.split(" ")[0])
-        elif browser.find_elements_by_xpath("//div[@id='clcoffer']/p").__len__()>0:
-            element = browser.find_element_by_xpath("//div[@id='clcoffer']/p")
-            if 'CenturyLink has fiber-connected Internet with speeds up to 1 Gig in your area' in element.text:
-                writeToDBBadAddress(address_orig)
-                browser.quit()
-                return
-        elif browser.find_elements_by_id("mboxSorryMain").__len__() > 0:
-                browser.quit()
-                time.sleep(300)
-                test3(address, emm_stuff)
-
-        # extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
-        #extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
-        if "866" not in extracted_speed_match:
-            writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
-            # output = re.sub('\s+',' ', addressFound_formatted+', '+extracted_speed_match)
-            # f = open(filename,'a')
-            # f.write(output+",%s,%s,%s\n"%(emm_stuff[0], emm_stuff[1],emm_stuff[2]))
-            # f.close()
-        browser.quit()
+        browser.find_element_by_id('ctam_nc-go').click()
     except:
-        try:
+        pass
+
+    addressFound_formatted = re.sub(r'%s (\d+)'%(state), r'%s,\1'%(state), addressFound)
+    addressFound_formatted = re.sub(',USA', '', addressFound_formatted)
+    count = 0
+    while not 'Choose an Offer' in browser.page_source and count < 10:
+        if 'We need some additional information' in browser.page_source:
+            browser.find_element_by_id('addressid2').click()
+            browser.find_element_by_id('submitSecUnit').click()
+        time.sleep(2)
+        count += 1
+
+    # element = browser.find_element_by_css_selector('.highestSpeed')
+    if browser.find_elements_by_xpath("//p[@id='highestSpeedWL']/span").__len__()>0:
+        element = browser.find_element_by_xpath("//p[@id='highestSpeedWL']/span")
+        extracted_speed_match = re.sub(',','',element.text.split(" ")[0])
+    elif browser.find_elements_by_xpath("//div[@id='clcoffer']/p").__len__()>0:
+        element = browser.find_element_by_xpath("//div[@id='clcoffer']/p")
+        if 'CenturyLink has fiber-connected Internet with speeds up to 1 Gig in your area' in element.text:
+            writeToDBBadAddress(address_orig)
             browser.quit()
-            return False
-        except:
-            return False
+            return
+    elif browser.find_elements_by_id("mboxSorryMain").__len__() > 0:
+            browser.quit()
+            time.sleep(300)
+            test3(address, emm_stuff)
+
+    # extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
+    #extracted_speed_match = re.search("(\d+\.?\d?)",element.text)
+    if "866" not in extracted_speed_match:
+        writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
+        # output = re.sub('\s+',' ', addressFound_formatted+', '+extracted_speed_match)
+        # f = open(filename,'a')
+        # f.write(output+",%s,%s,%s\n"%(emm_stuff[0], emm_stuff[1],emm_stuff[2]))
+        # f.close()
+    browser.quit()
 
 def run_test(i):
     i = i.strip()
@@ -191,10 +184,7 @@ def do_stuff(q):
         channel.basic_consume(callback,
                       queue='clspeed',
                       )
-        try:
-            channel.start_consuming()
-        except:
-            do_stuff(q)
+        channel.start_consuming()
         q.task_done()
 
 q = Queue(maxsize=0)
