@@ -46,7 +46,7 @@ def getUserAgent():
 
 def sorryAddressesBackToRabbit(orig):
         connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='192.168.1.114'))
+            host='192.168.1.211'))
         channel = connection.channel()
         if queue_name == 'clspeedSorryAddresses':
             sorry_queue_name = 'clspeedSorryAddressesAgain'
@@ -63,7 +63,7 @@ def writeToDBBadAddress(address):
         query = "insert into badaddresses " \
                 "(badaddress) " \
                 "values ('%s')"%(address)
-        con = mdb.connect('192.168.1.114', 'clspeed', 'clspeed', 'clspeed');
+        con = mdb.connect('192.168.1.211', 'clspeed', 'clspeed', 'clspeed');
 
         cur = con.cursor()
         cur.execute(query)
@@ -92,7 +92,7 @@ def writeToDB(address, speed, emm_stuff):
         query = "insert into clspeed " \
                 "(street,city,state,zip,speed,emm_lat,emm_lng,emm_acc) " \
                 "values ('%s','%s','%s','%s',%s,%s,%s,'%s')"%(street,city,state,zip,speed,emm_lat,emm_lng,emm_acc)
-        con = mdb.connect('192.168.1.114', 'clspeed', 'clspeed', 'clspeed');
+        con = mdb.connect('192.168.1.211', 'clspeed', 'clspeed', 'clspeed');
 
         cur = con.cursor()
         cur.execute(query)
@@ -161,9 +161,16 @@ def test3(address, emm_stuff):
             if queue_name == 'clspeed':
                 time.sleep(600)
             return
+    elif browser.find_elements_by_id("mainoffer").__len__() > 0:
+        element = browser.find_element_by_xpath("//div[@id='mainoffer']/p")
+        if 'We are temporarily experiencing system issues' in element.text:
+            writeToDBBadAddress(address_orig)
+            browser.quit()
+            return
     elif browser.find_elements_by_xpath("//div[@id='internet_highest_speed_wrap']/div").__len__()>0:
         if (browser.find_element_by_xpath("//div[@id='internet_highest_speed_wrap']/div").get_attribute("class")) == "internet_dialup_wrap":
             writeToDBBadAddress(address_orig)
+            browser.quit()
             return
     try:
         if "866" not in extracted_speed_match:
@@ -192,7 +199,7 @@ def callback(ch, method, properties, body):
 def do_stuff(q):
     while True:
         connection = pika.BlockingConnection(pika.ConnectionParameters(
-                host='192.168.1.114'))
+                host='192.168.1.211'))
         channel = connection.channel()
         channel.queue_declare(queue=queue_name, durable=True)
         channel.basic_qos(prefetch_count=1)
