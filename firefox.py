@@ -147,7 +147,7 @@ def test3(address, emm_stuff):
         count += 1
 
     # element = browser.find_element_by_css_selector('.highestSpeed')
-    extracted_speed_match = 0
+    extracted_speed_match = "temp"
     if browser.find_elements_by_xpath("//p[@id='highestSpeedWL']/span").__len__()>0:
         element = browser.find_element_by_xpath("//p[@id='highestSpeedWL']/span")
         extracted_speed_match = re.sub(',','',element.text.split(" ")[0])
@@ -175,7 +175,7 @@ def test3(address, emm_stuff):
             browser.quit()
             return
     # try:
-    if "866" not in extracted_speed_match and extracted_speed_match != 0:
+    if "866" not in extracted_speed_match and "temp" not in extracted_speed_match:
         writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
         browser.quit()
     # except UnboundLocalError:
@@ -212,7 +212,7 @@ def do_stuff(q):
         q.task_done()
 
 q = Queue(maxsize=0)
-num_threads = 15
+num_threads = 10
 
 
 
