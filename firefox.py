@@ -126,11 +126,16 @@ def test3(address, emm_stuff):
     browser.find_element_by_id('ctam_new-customer-link').click()
     browser.find_element_by_id('ctam_nc-sfaddress').send_keys(address)
     if browser.find_elements_by_css_selector('.ui-autocomplete.ui-menu.ui-widget.ui-widget-content.ui-corner-all')>0:
-        browser.find_element_by_css_selector('.ui-autocomplete.ui-menu.ui-widget.ui-widget-content.ui-corner-all')
-        time.sleep(2)
-        addressFound = browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').text
-        # print addressFound
-        browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').click()
+        try:
+            browser.find_element_by_css_selector('.ui-autocomplete.ui-menu.ui-widget.ui-widget-content.ui-corner-all')
+            time.sleep(2)
+            addressFound = browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').text
+            # print addressFound
+            browser.find_element_by_css_selector('li.ui-menu-item:nth-child(1) > a:nth-child(1)').click()
+        except:
+            writeToDBBadAddress(address_orig)
+            browser.quit()
+            return
     try:
         browser.find_element_by_id('ctam_nc-go').click()
     except:
