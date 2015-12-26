@@ -113,7 +113,8 @@ def test3(address, emm_stuff):
     address_orig = address
     address_tmp = address.split(',')
     address = "%s, %s, %s, %s"%(address_tmp[0],address_tmp[1],state,address_tmp[2])
-    profile_dir = glob.glob(os.path.expanduser("~")+"/.mozilla/firefox/*clspeed")[0]
+    # profile_dir = glob.glob(os.path.expanduser("~")+"/.mozilla/firefox/*clspeed")[0]
+    profile_dir = os.path.join("C:/Users/mike/AppData/Roaming/Mozilla/Firefox/Profiles/fewqu4og.selenium")
     profile = webdriver.FirefoxProfile(profile_dir)
     user_agent = getUserAgent()
     profile.set_preference("general.useragent.override", user_agent)
@@ -139,7 +140,7 @@ def test3(address, emm_stuff):
     addressFound_formatted = re.sub(r'%s (\d+)'%(state), r'%s,\1'%(state), addressFound)
     addressFound_formatted = re.sub(',USA', '', addressFound_formatted)
     count = 0
-    while not 'Choose an Offer' in browser.page_source and count < 10:
+    while not 'Choose an Offer' in browser.page_source and count < 1:
         if 'We need some additional information' in browser.page_source:
             browser.find_element_by_id('addressid2').click()
             browser.find_element_by_id('submitSecUnit').click()
@@ -150,11 +151,12 @@ def test3(address, emm_stuff):
     if browser.find_elements_by_xpath("//p[@id='highestSpeedWL']/span").__len__()>0:
         element = browser.find_element_by_xpath("//p[@id='highestSpeedWL']/span")
         extracted_speed_match = re.sub(',','',element.text.split(" ")[0])
-    elif browser.find_elements_by_xpath("//div[@id='clcoffer']/p").__len__()>0:
+    elif browser.find_elements_by_xpath("//div[@id='clcoffer']/p").__len__()>0 and browser.find_elements_by_xpath("//div[@id='mainoffer']/p").__len__()==0:
         element = browser.find_element_by_xpath("//div[@id='clcoffer']/p")
         if 'CenturyLink has fiber-connected Internet with speeds up to 1 Gig in your area' in element.text:
             writeToDBBadAddress(address_orig)
             browser.quit()
+            return
     elif browser.find_elements_by_id("mboxSorryMain").__len__() > 0:
             sorryAddressesBackToRabbit(address_orig)
             browser.quit()
@@ -172,12 +174,12 @@ def test3(address, emm_stuff):
             writeToDBBadAddress(address_orig)
             browser.quit()
             return
-    try:
-        if "866" not in extracted_speed_match:
-            writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
-            browser.quit()
-    except UnboundLocalError:
-        print "BAD ADDRESS: "+address_orig
+    # try:
+    if "866" not in extracted_speed_match:
+        writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
+        browser.quit()
+    # except UnboundLocalError:
+    #     print "BAD ADDRESS: "+address_orig
 
     # except:
     #     try:

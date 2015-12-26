@@ -9,7 +9,7 @@ else:
 
 f = open(filename,'r')
 
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.211'))
 
 channel = connection.channel()
 
