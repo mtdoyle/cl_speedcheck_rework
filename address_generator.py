@@ -45,10 +45,10 @@ while curr_lon <= end_lon:
                 f.write(addr+"\n")
             f.close()
         if curr_lat > end_lat:
-            curr_lat = curr_lat - .001
+            curr_lat = curr_lat - .003
         else:
             curr_lat = start_lat
-            curr_lon = curr_lon + .003
+            curr_lon = curr_lon + .005
         sleep_cycle = sleep_cycle + 1
         if sleep_cycle == 4:
             time.sleep(1)
