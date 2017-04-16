@@ -3,20 +3,6 @@
   sudo: false
   tasks:
 
-  - name: create clspeed
-    file: path={{ ansible_env.HOME }}/clspeed state=directory mode=0755
-
-  - name: download clspeed property file
-    get_url:
-      url=https://github.com/mtdoyle/CLSpeedPhantomJS/releases/download/1.0/local.properties
-      dest={{ ansible_env.HOME }}/clspeed
-
-  - name: replace ip in property file
-    replace: dest={{ ansible_env.HOME }}/clspeed/local.properties regexp='^databaseServer=.*' replace='databaseServer={{ ansible_eth0[\'ipv4\'][\'address\'] }}'
-
-  - name: replace ip in property file
-    replace: dest={{ ansible_env.HOME }}/clspeed/local.properties regexp='^rabbitmqServer=.*' replace='rabbitmqServer={{ ansible_eth0[\'ipv4\'][\'address\'] }}'
-
   - name: get load_rabbitmq.py
     get_url:
       url=https://github.com/mtdoyle/CLSpeedPhantomJS/raw/master/Resources/LoadRabbitMQ/load_rabbitmq.py     
