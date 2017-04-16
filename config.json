@@ -1,0 +1,7 @@
+{
+  "queue_name": "clspeed",
+  "rabbitmq_host": "localhost",
+  "rabbitmq_port": 15672,
+  "mysql_host": "localhost",
+  "mysql_port": 3406
+}

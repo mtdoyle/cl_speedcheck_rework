@@ -137,9 +137,8 @@ def test3(address, emm_stuff):
     address_orig = address
     address_tmp = address.split(',')
     address = "%s, %s, %s"%(address_tmp[0],address_tmp[1],address_tmp[2])
-    firefox_binary = FirefoxBinary("/Applications/firefox_41/Firefox.app/Contents/MacOS/firefox")
-    browser = webdriver.Firefox(firefox_binary=firefox_binary)
-    browser.set_window_size(800,600)
+    browser = webdriver.PhantomJS()
+    browser.set_window_size(1024,768)
     browser.delete_all_cookies()
     browser.get('http://www.centurylink.com/home/internet/')
     browser.find_element_by_id('btnInternetTabOnly').click()
@@ -231,7 +230,7 @@ def do_stuff(q):
         q.task_done()
 
 q = Queue(maxsize=0)
-num_threads = 5
+num_threads = 10
 
 
 
