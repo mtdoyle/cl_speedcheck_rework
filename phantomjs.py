@@ -216,7 +216,10 @@ def test3(address, emm_stuff):
     if extracted_speed_match:
         if "866" not in extracted_speed_match:
             writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
-            browser.quit()
+            try:
+                browser.quit()
+            except OSError:
+                return
         else:
             print "Error with address {0}".format(address)
 
