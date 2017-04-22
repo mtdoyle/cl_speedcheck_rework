@@ -6,10 +6,13 @@ from threading import Thread
 from datetime import datetime
 import time
 import re
+import selenium
 from selenium import webdriver
+from selenium.common.exceptions import ElementNotVisibleException
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.common.keys import Keys
 import MySQLdb as mdb
+from selenium.common.exceptions import ElementNotVisibleException
 import sys
 import random
 import glob
@@ -48,7 +51,7 @@ def getUserAgent():
 
 def sorryAddressesBackToRabbit(orig):
         connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='127.0.0.1'))
+            host='192.168.1.211'))
         channel = connection.channel()
         if queue_name == 'clspeedSorryAddresses':
             sorry_queue_name = 'clspeedSorryAddressesAgain'
@@ -65,7 +68,7 @@ def writeToDBBadAddress(address):
         query = "insert into badaddresses " \
                 "(badaddress) " \
                 "values ('%s')"%(address)
-        con = mdb.connect(host='127.0.0.1', port='3406', user='clspeed', passwd='clspeed', db='clspeed')
+        con = mdb.connect(host='192.168.1.211', port='3307', user='clspeed', passwd='clspeed', db='clspeed')
 
         cur = con.cursor()
         cur.execute(query)
@@ -88,7 +91,7 @@ def createDB():
             "(street varchar(100) {0}, city varchar(100) {0}, state varchar(2) {0}, zip int(5), speed decimal(5,1), " \
             "emm_lat decimal(12,10), emm_lng decimal(12,10), emm_acc varchar(20) {0})".format(charset)
 
-    con = mdb.connect(host='127.0.0.1', port=3406, user='clspeed', passwd='clspeed', db='clspeed')
+    con = mdb.connect(host='192.168.1.211', port=3307, user='clspeed', passwd='clspeed', db='clspeed')
 
     cur = con.cursor()
     cur.execute(query)
@@ -116,7 +119,7 @@ def writeToDB(address, speed, emm_stuff):
         query = "insert into clspeed " \
                 "(street,city,state,zip,speed,emm_lat,emm_lng,emm_acc) " \
                 "values ('%s','%s','%s','%s',%s,%s,%s,'%s')"%(street,city,state,zip,speed,emm_lat,emm_lng,emm_acc)
-        con = mdb.connect(host='127.0.0.1', port=3406, user='clspeed', passwd='clspeed', db='clspeed')
+        con = mdb.connect(host='192.168.1.211', port=3307, user='clspeed', passwd='clspeed', db='clspeed')
 
         cur = con.cursor()
         cur.execute(query)
@@ -137,13 +140,27 @@ def test3(address, emm_stuff):
     address_orig = address
     address_tmp = address.split(',')
     address = "%s, %s, %s"%(address_tmp[0],address_tmp[1],address_tmp[2])
+    # firefox_binary = FirefoxBinary("/Applications/firefox_41/Firefox.app/Contents/MacOS/firefox")
+    # browser = webdriver.Firefox(firefox_binary=firefox_binary)
     browser = webdriver.PhantomJS()
-    browser.set_window_size(1024,768)
+    browser.maximize_window()
     browser.delete_all_cookies()
-    browser.get('http://www.centurylink.com/home/internet/')
-    browser.find_element_by_id('btnInternetTabOnly').click()
-    # browser.find_element_by_id('home-speed-check').click()
-    browser.find_element_by_id('ctam_nc-sfaddress').click()
+    browser.get('http://www.centurylink.com/home')
+    time.sleep(1)
+    # browser.find_element_by_id('home-internet-speed-check').click()
+
+    browser.find_element_by_id('home-speed-check').click()
+    tries = 0
+    while tries < 20:
+        try:
+            browser.find_element_by_id('ctam_nc-sfaddress').click()
+            break
+        except ElementNotVisibleException:
+            time.sleep(1)
+            tries += 1
+            if tries == 20:
+                print "Tried 20 times to find link for {0}".format(address)
+                return
     browser.find_element_by_id('ctam_nc-sfaddress').send_keys(address)
     time.sleep(1)
 
@@ -162,9 +179,13 @@ def test3(address, emm_stuff):
         if 'We need some additional information' in browser.page_source:
             browser.find_element_by_id('addressid2').click()
             browser.find_element_by_id('submitSecUnit').click()
+        if browser.find_elements_by_id('noMatch').__len__() > 0:
+            browser.quit()
+            return
         time.sleep(2)
         count += 1
 
+    extracted_speed_match = None
     # element = browser.find_element_by_css_selector('.highestSpeed')
     if browser.find_elements_by_xpath("//p[@id='highestSpeedWL']/span").__len__()>0:
         element = browser.find_element_by_xpath("//p[@id='highestSpeedWL']/span")
@@ -192,9 +213,12 @@ def test3(address, emm_stuff):
             browser.quit()
             return
 
-    if "866" not in extracted_speed_match:
-        writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
-        browser.quit()
+    if extracted_speed_match:
+        if "866" not in extracted_speed_match:
+            writeToDB(addressFound_formatted, extracted_speed_match, emm_stuff)
+            browser.quit()
+        else:
+            print "Error with address {0}".format(address)
 
     # except:
     #     try:
@@ -216,10 +240,10 @@ def callback(ch, method, properties, body):
 
 def do_stuff(q):
     while True:
-        credentials = pika.PlainCredentials('clspeed', 'clspeed')
+        credentials = pika.PlainCredentials('guest', 'guest')
 
         connection = pika.BlockingConnection(pika.ConnectionParameters(
-                host='127.0.0.1', port=5672, credentials=credentials))
+                host='192.168.1.211', port=5673, credentials=credentials))
         channel = connection.channel()
         channel.queue_declare(queue=queue_name, durable=True)
         channel.basic_qos(prefetch_count=1)

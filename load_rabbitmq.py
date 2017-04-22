@@ -9,9 +9,9 @@ else:
 
 f = open(filename,'r')
 
-credentials = pika.PlainCredentials('clspeed', 'clspeed')
+credentials = pika.PlainCredentials('guest', 'guest')
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', port=5672, credentials=credentials))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='192.168.1.211', port=5673, credentials=credentials))
 
 channel = connection.channel()
 

@@ -1,0 +1,30 @@
+version: '2'
+
+services:
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+    restart: always
+    ports:
+      - "8080:80"
+
+  db:
+    image: mysql:5
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: clspeed
+      MYSQL_USER: clspeed
+      MYSQL_PASSWORD: clspeed
+    ports:
+     - "3306:3306"
+    tty: true
+
+  clspeed:
+    build:
+      context: .
+      dockerfile: Dockerfile-clspeed
+    container_name: clspeed
